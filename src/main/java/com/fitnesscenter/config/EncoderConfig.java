@@ -15,9 +15,12 @@ public class EncoderConfig {
     }
 
     @Bean
-    CommandLineRunner run(PasswordEncoder passwordEncoder) {
+    CommandLineRunner run(PasswordEncoder pe) {
         return args -> {
-            System.out.println(passwordEncoder.encode("Uros123L"));
+        	   System.out.println("USER stefanStevanovic = " + pe.encode("stefanStevanovic"));
+        	    System.out.println("USER LazarIlicc      = " + pe.encode("LazarIlicc"));
+        	    System.out.println("SELLER Milos123L     = " + pe.encode("Milos123L"));
+        	    System.out.println("ADMIN Uros123L       = " + pe.encode("Uros123L"));
         };
     }
 }

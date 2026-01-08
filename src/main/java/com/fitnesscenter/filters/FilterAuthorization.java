@@ -1,10 +1,13 @@
 package com.fitnesscenter.filters;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -12,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
 import jakarta.servlet.FilterChain;
@@ -36,43 +40,74 @@ public class FilterAuthorization extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // Preskoči login/registration (prilagodi rute svojim endpoint-ima)
-        if (path.equals("/api/member/login") || path.equals("/api/member/registration")) {
+        // preskoči auth + swagger rute
+        if ("/api/member/login".equals(path)
+                || "/api/member/registration".equals(path)
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String header = request.getHeader("Authorization");
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            String token = header.substring(7);
+            String token = header.substring("Bearer ".length());
             DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
 
             String email = jwt.getSubject();
 
-            // BITNO: FilterAuthentication upisuje claim "uloga"
-            List<String> roles = jwt.getClaim("uloga").asList(String.class);
-            if (roles == null) roles = Collections.emptyList();
+            // claim "uloga" može biti lista ili string
+            Claim roleClaim = jwt.getClaim("uloga");
 
-            var authorities = roles.stream()
-                    .map(SimpleGrantedAuthority::new)
-                    .toList();
+            List<String> roles = Collections.emptyList();
+            if (roleClaim != null && !roleClaim.isNull()) {
+                roles = roleClaim.asList(String.class);
 
-            var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
+                // ako nije lista nego string
+                if (roles == null || roles.isEmpty()) {
+                    String single = roleClaim.asString();
+                    if (single != null && !single.trim().isEmpty()) {
+                        roles = new ArrayList<>();
+                        roles.add(single.trim());
+                    } else {
+                        roles = Collections.emptyList();
+                    }
+                }
+            }
+
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            for (String r : roles) {
+                if (r == null) continue;
+                String role = r.trim();
+                if (role.isEmpty()) continue;
+
+                // normalizuj: ADMIN -> ROLE_ADMIN; ROLE_ADMIN ostaje ROLE_ADMIN
+                if (!role.startsWith("ROLE_")) {
+                    role = "ROLE_" + role;
+                }
+                authorities.add(new SimpleGrantedAuthority(role));
+            }
+
+            // debug (možeš obrisati kasnije)
+            System.out.println("JWT roles claim uloga = " + roles);
+            System.out.println("Granted authorities = " + authorities);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            filterChain.doFilter(request, response);
+
         } catch (Exception e) {
             SecurityContextHolder.clearContext();
-            // opciono: možeš vratiti 403 odmah, ali često je ok samo pustiti dalje pa će security blokirati
-            // response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            // return;
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
-
-        filterChain.doFilter(request, response);
     }
 }
