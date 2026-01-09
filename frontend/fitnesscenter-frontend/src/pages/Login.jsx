@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
 import { tokenStore } from "../auth/token";
+import { tokenStore, getRolesFromToken } from "../auth/token";
+
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,7 +19,12 @@ export default function Login() {
     try {
       const token = await login(email, password);
       tokenStore.set(token);
-      nav("/appointments");
+
+      const roles = getRolesFromToken(token);
+
+      if (roles.includes("ROLE_ADMIN")) nav("/admin");
+      else nav("/appointments");
+
     } catch (e2) {
       setErr(e2?.response?.data?.message || e2?.message || "Login error");
     } finally {
