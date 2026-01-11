@@ -1,14 +1,14 @@
-# frontend
-**/node_modules/
-**/dist/
-**/.vite/
-**/.env
+# Node
+node_modules/
+dist/
+build/
 
-# backend
-**/target/
-**/*.log
+# Backend
+target/
+.env
 
-# IDE
-**/.idea/
-**/.vscode/
+# Docker
+*.log
+
+# OS
 .DS_Store
