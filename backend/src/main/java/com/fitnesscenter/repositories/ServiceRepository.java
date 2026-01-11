@@ -12,7 +12,9 @@ import com.fitnesscenter.models.Service;
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
 
-    Service findById(int serviceId);
+   
 
     Page<Service> findByNameServiceIn(List<String> services, Pageable pageable);
+
+
 }

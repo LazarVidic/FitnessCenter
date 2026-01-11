@@ -1,15 +1,15 @@
 package com.fitnesscenter.services;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import com.fitnesscenter.dtos.LocationDto;
 import com.fitnesscenter.models.Location;
 import com.fitnesscenter.repositories.LocationRepository;
 
-@Service
+@org.springframework.stereotype.Service
 public class LocationService {
 
     @Autowired
@@ -20,7 +20,9 @@ public class LocationService {
     }
 
     public Location getLocationById(int location_id) {
-        return locationRepository.findById(location_id);
+        Optional<Location> opt = locationRepository.findById(location_id);
+        if (opt.isPresent()) return opt.get();
+        return null;
     }
 
     public Location createLocation(LocationDto locationDto) {
@@ -31,7 +33,10 @@ public class LocationService {
     }
 
     public Location updateLocation(int location_id, LocationDto locationDto) {
-        Location location = locationRepository.findById(location_id);
+        Optional<Location> opt = locationRepository.findById(location_id);
+        Location location = null;
+        if (opt.isPresent()) location = opt.get();
+
         if (location == null) return null;
 
         location.setLocationName(locationDto.getLocationName());
@@ -41,7 +46,10 @@ public class LocationService {
     }
 
     public Location deleteLocation(int location_id) {
-        Location location = locationRepository.findById(location_id);
+        Optional<Location> opt = locationRepository.findById(location_id);
+        Location location = null;
+        if (opt.isPresent()) location = opt.get();
+
         if (location == null) return null;
 
         locationRepository.delete(location);

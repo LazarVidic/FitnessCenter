@@ -1,10 +1,10 @@
 package com.fitnesscenter.services;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 import com.fitnesscenter.dtos.MemberDto;
 import com.fitnesscenter.models.Location;
@@ -13,7 +13,7 @@ import com.fitnesscenter.models.Roll;
 import com.fitnesscenter.repositories.LocationRepository;
 import com.fitnesscenter.repositories.MemberRepository;
 
-@Service
+@org.springframework.stereotype.Service
 public class MemberService {
 
     @Autowired
@@ -30,17 +30,21 @@ public class MemberService {
     }
 
     public Member getMemberById(int member_id) {
-        return memberRepository.findById(member_id);
+        Optional<Member> opt = memberRepository.findById(member_id);
+        if (opt.isPresent()) return opt.get();
+        return null;
     }
 
     private Location resolveLocation(int locationId) {
         if (locationId <= 0) return null;
-        return locationRepository.findById(locationId);
+
+        Optional<Location> opt = locationRepository.findById(locationId);
+        if (opt.isPresent()) return opt.get();
+        return null;
     }
 
     public Member createMemberAdmin(MemberDto dto) {
         Location loc = resolveLocation(dto.getLocationId());
-        // ADMIN može i bez lokacije, ali ako si poslao locationId mora postojati
         if (dto.getLocationId() > 0 && loc == null) return null;
 
         Member member = new Member(
@@ -58,7 +62,7 @@ public class MemberService {
 
     public Member createMemberSeller(MemberDto dto) {
         Location loc = resolveLocation(dto.getLocationId());
-        if (loc == null) return null;
+        if (dto.getLocationId() > 0 && loc == null) return null;
 
         Member member = new Member(
                 dto.getMemberName(),
@@ -91,7 +95,9 @@ public class MemberService {
     }
 
     public Member updateMember(int member_id, MemberDto dto) {
-        Member member = memberRepository.findById(member_id);
+        Optional<Member> optMember = memberRepository.findById(member_id);
+        Member member = null;
+        if (optMember.isPresent()) member = optMember.get();
         if (member == null) return null;
 
         if (dto.getMemberName() != null && !dto.getMemberName().isBlank()) member.setMemberName(dto.getMemberName());
@@ -109,7 +115,6 @@ public class MemberService {
             member.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        
         if (dto.getLocationId() >= 0) {
             Location loc = resolveLocation(dto.getLocationId());
             if (dto.getLocationId() > 0 && loc == null) return null;
@@ -120,7 +125,9 @@ public class MemberService {
     }
 
     public Member deleteMember(int member_id) {
-        Member member = memberRepository.findById(member_id);
+        Optional<Member> optMember = memberRepository.findById(member_id);
+        Member member = null;
+        if (optMember.isPresent()) member = optMember.get();
         if (member == null) return null;
 
         memberRepository.delete(member);

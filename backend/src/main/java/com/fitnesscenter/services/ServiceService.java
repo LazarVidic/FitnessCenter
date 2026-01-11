@@ -1,6 +1,7 @@
 package com.fitnesscenter.services;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -27,7 +28,11 @@ public class ServiceService {
     }
 
     public Service getServiceById(int service_id) {
-        return serviceRepository.findById(service_id);
+        Optional<Service> opt = serviceRepository.findById(service_id);
+        if (opt.isPresent()) {
+            return opt.get();
+        }
+        return null;
     }
 
     public Service createService(ServiceDto serviceDto) {
@@ -36,7 +41,13 @@ public class ServiceService {
     }
 
     public Service updateService(int service_id, ServiceDto serviceDto) {
-        Service service = serviceRepository.findById(service_id);
+        Optional<Service> opt = serviceRepository.findById(service_id);
+        Service service = null;
+
+        if (opt.isPresent()) {
+            service = opt.get();
+        }
+
         if (service == null) return null;
 
         service.setNameService(serviceDto.getNameService());
@@ -46,7 +57,13 @@ public class ServiceService {
     }
 
     public Service deleteService(int service_id) {
-        Service service = serviceRepository.findById(service_id);
+        Optional<Service> opt = serviceRepository.findById(service_id);
+        Service service = null;
+
+        if (opt.isPresent()) {
+            service = opt.get();
+        }
+
         if (service == null) return null;
 
         serviceRepository.delete(service);

@@ -17,6 +17,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.fitnesscenter.dtos.LoginRequestDto;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,10 +27,11 @@ public class FilterAuthentication extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Algorithm algorithm = Algorithm.HMAC256("secretKey".getBytes());
+    private final Algorithm algorithm;
 
-    public FilterAuthentication(AuthenticationManager authenticationManager) {
+    public FilterAuthentication(AuthenticationManager authenticationManager, String jwtSecret) {
         this.authenticationManager = authenticationManager;
+        this.algorithm = Algorithm.HMAC256(jwtSecret.getBytes());
     }
 
     @Override

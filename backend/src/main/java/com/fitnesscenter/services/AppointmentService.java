@@ -1,9 +1,9 @@
 package com.fitnesscenter.services;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import com.fitnesscenter.dtos.AppointmentDto;
 import com.fitnesscenter.models.Appointment;
@@ -12,7 +12,7 @@ import com.fitnesscenter.repositories.AppointmentRepository;
 import com.fitnesscenter.repositories.LocationRepository;
 import com.fitnesscenter.repositories.ServiceRepository;
 
-@Service
+@org.springframework.stereotype.Service
 public class AppointmentService {
 
     @Autowired
@@ -29,14 +29,20 @@ public class AppointmentService {
     }
 
     public Appointment getAppointmentById(int appointment_id) {
-        return appointmentRepository.findById(appointment_id);
+        Optional<Appointment> opt = appointmentRepository.findById(appointment_id);
+        if (opt.isPresent()) return opt.get();
+        return null;
     }
 
     public Appointment createAppointment(AppointmentDto appointmentDto) {
 
-        Location location = locationRepository.findById(appointmentDto.getLocationId());
-        com.fitnesscenter.models.Service trainingService =
-                serviceRepository.findById(appointmentDto.getServiceId());
+        Optional<Location> optLoc = locationRepository.findById(appointmentDto.getLocationId());
+        Location location = null;
+        if (optLoc.isPresent()) location = optLoc.get();
+
+        Optional<com.fitnesscenter.models.Service> optSvc = serviceRepository.findById(appointmentDto.getServiceId());
+        com.fitnesscenter.models.Service trainingService = null;
+        if (optSvc.isPresent()) trainingService = optSvc.get();
 
         if (location == null || trainingService == null) {
             return null;
@@ -54,12 +60,18 @@ public class AppointmentService {
 
     public Appointment updateAppointment(int appointment_id, AppointmentDto appointmentDto) {
 
-        Appointment appointment = appointmentRepository.findById(appointment_id);
+        Optional<Appointment> optAppt = appointmentRepository.findById(appointment_id);
+        Appointment appointment = null;
+        if (optAppt.isPresent()) appointment = optAppt.get();
         if (appointment == null) return null;
 
-        Location location = locationRepository.findById(appointmentDto.getLocationId());
-        com.fitnesscenter.models.Service trainingService =
-                serviceRepository.findById(appointmentDto.getServiceId());
+        Optional<Location> optLoc = locationRepository.findById(appointmentDto.getLocationId());
+        Location location = null;
+        if (optLoc.isPresent()) location = optLoc.get();
+
+        Optional<com.fitnesscenter.models.Service> optSvc = serviceRepository.findById(appointmentDto.getServiceId());
+        com.fitnesscenter.models.Service trainingService = null;
+        if (optSvc.isPresent()) trainingService = optSvc.get();
 
         if (location == null || trainingService == null) {
             return null;
@@ -75,7 +87,10 @@ public class AppointmentService {
     }
 
     public Appointment deleteAppointment(int appointment_id) {
-        Appointment appointment = appointmentRepository.findById(appointment_id);
+        Optional<Appointment> opt = appointmentRepository.findById(appointment_id);
+        Appointment appointment = null;
+        if (opt.isPresent()) appointment = opt.get();
+
         if (appointment == null) return null;
 
         appointmentRepository.delete(appointment);

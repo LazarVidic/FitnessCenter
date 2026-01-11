@@ -25,89 +25,100 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class FilterAuthorization extends OncePerRequestFilter {
 
-    private final Algorithm algorithm;
+	private final Algorithm algorithm;
 
-    public FilterAuthorization(String jwtSecret) {
-        this.algorithm = Algorithm.HMAC256(jwtSecret.getBytes());
-    }
+	public FilterAuthorization(String jwtSecret) {
+		this.algorithm = Algorithm.HMAC256(jwtSecret.getBytes());
+	}
 
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
 
-        String path = request.getServletPath();
+		String path = request.getServletPath();
 
-        // preskoči auth + swagger rute
-        if ("/api/member/login".equals(path)
-                || "/api/member/registration".equals(path)
-                || path.startsWith("/swagger-ui")
-                || path.startsWith("/v3/api-docs")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+		if ("/api/stripe/webhook".equals(path) || "/api/member/login".equals(path)
+				|| "/api/member/registration".equals(path) || path.startsWith("/swagger-ui")
+				|| path.startsWith("/v3/api-docs")) {
+			filterChain.doFilter(request, response);
+			return;
+		}
 
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header == null || !header.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        try {
-            String token = header.substring("Bearer ".length());
-            DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
+		if (header == null || !header.startsWith("Bearer ")) {
+			filterChain.doFilter(request, response);
+			return;
+		}
 
-            String email = jwt.getSubject();
+		try {
+			String token = header.substring("Bearer ".length());
+			DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
 
-            // claim "uloga" može biti lista ili string
-            Claim roleClaim = jwt.getClaim("uloga");
+			String email = jwt.getSubject();
 
-            List<String> roles = Collections.emptyList();
-            if (roleClaim != null && !roleClaim.isNull()) {
-                roles = roleClaim.asList(String.class);
+			Claim roleClaim = jwt.getClaim("uloga");
 
-                // ako nije lista nego string
-                if (roles == null || roles.isEmpty()) {
-                    String single = roleClaim.asString();
-                    if (single != null && !single.trim().isEmpty()) {
-                        roles = new ArrayList<>();
-                        roles.add(single.trim());
-                    } else {
-                        roles = Collections.emptyList();
-                    }
-                }
-            }
+			List<String> roles = new ArrayList<>();
 
-            List<GrantedAuthority> authorities = new ArrayList<>();
-            for (String r : roles) {
-                if (r == null) continue;
-                String role = r.trim();
-                if (role.isEmpty()) continue;
+			if (roleClaim != null && !roleClaim.isNull()) {
 
-                // normalizuj: ADMIN -> ROLE_ADMIN; ROLE_ADMIN ostaje ROLE_ADMIN
-                if (!role.startsWith("ROLE_")) {
-                    role = "ROLE_" + role;
-                }
-                authorities.add(new SimpleGrantedAuthority(role));
-            }
+				String single = null;
+				try {
+					single = roleClaim.asString();
+				} catch (Exception ignored) {
+				}
 
-            // debug (možeš obrisati kasnije)
-            System.out.println("JWT roles claim uloga = " + roles);
-            System.out.println("Granted authorities = " + authorities);
+				if (single != null && !single.trim().isEmpty()) {
+					roles.add(single.trim());
+				} else {
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+					List<String> list = null;
+					try {
+						list = roleClaim.asList(String.class);
+					} catch (Exception ignored) {
+					}
 
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+					if (list != null) {
+						for (String r : list) {
+							if (r != null && !r.trim().isEmpty())
+								roles.add(r.trim());
+						}
+					}
+				}
+			}
 
-            filterChain.doFilter(request, response);
+			List<GrantedAuthority> authorities = new ArrayList<>();
+			for (String r : roles) {
+				String role = r.trim();
+				if (!role.startsWith("ROLE_"))
+					role = "ROLE_" + role;
+				authorities.add(new SimpleGrantedAuthority(role));
+			}
 
-        } catch (Exception e) {
-            SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        }
-    }
+			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null,
+					authorities);
+
+			authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+			SecurityContextHolder.getContext().setAuthentication(authentication);
+
+			filterChain.doFilter(request, response);
+
+		} catch (Exception e) {
+			SecurityContextHolder.clearContext();
+			e.printStackTrace(); // ✅ vidi tačno zašto pada (expired? signature? etc.)
+
+			SecurityContextHolder.clearContext();
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.setContentType("application/json");
+
+			response.getWriter()
+					.write("{\"error\":\"Unauthorized\",\"message\":\"" + e.getMessage().replace("\"", "'") + "\"}");
+
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.setContentType("application/json");
+			response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Invalid/expired token\"}");
+		}
+	}
+
 }

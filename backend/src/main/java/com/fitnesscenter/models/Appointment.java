@@ -22,12 +22,12 @@ public class Appointment {
     @Column(name = "max_capacity", nullable = false)
     private int maxCapacity;
 
-    // ✅ termin pripada lokaciji
+    
     @ManyToOne
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 
-    // ✅ termin pripada usluzi
+    
     @ManyToOne
     @JoinColumn(name = "service_id", nullable = false)
     private Service service;

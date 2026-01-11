@@ -33,7 +33,7 @@ public class Member {
     @Column(name = "username", nullable = false)
     private String username;
 
-    // ✅ član/zaposleni pripada lokaciji (seller/admin obavezno, user može null ako još nemaš logiku)
+    
     @ManyToOne
     @JoinColumn(name = "location_id", nullable = true)
     private Location location;
