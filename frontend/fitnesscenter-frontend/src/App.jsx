@@ -1,12 +1,15 @@
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import LoginModal from "./components/LoginModal";
 import Home from "./pages/Home";
 import Footer from "./components/Footer";
 import AdminPanel from "./pages/AdminPanel";
-import AppointmentsPage from "./pages/Appointment";
-import { hasRole, getToken } from "./auth/token";
+import UserPanel from "./pages/UserPanel";
+import StripeCheckoutStub from "./pages/StripeCheckoutStub";
+import StripeSuccess from "./pages/StripeSuccess";
+
+import { hasRole, getToken, clearToken } from "./auth/token";
 
 function RequireAuth({ children }) {
   const token = getToken();
@@ -23,25 +26,28 @@ function RequireRole({ role, children }) {
 
 export default function App() {
   const [loginOpen, setLoginOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getToken());
   const nav = useNavigate();
 
-  // bolje da zavisi od tokena iz tvog auth helpera
-  const isAuthenticated = useMemo(() => Boolean(getToken()), [loginOpen]);
+  // sync kad zatvoriš/otvoriš login modal (ili ako token promeni login)
+  useEffect(() => {
+    setIsAuthenticated(!!getToken());
+  }, [loginOpen]);
 
   return (
     <div className="app-layout">
       <Navbar
         isAuthenticated={isAuthenticated}
-        onLoginClick={() => setLoginOpen(true)}  // ✅ FIX
+        onLoginClick={() => setLoginOpen(true)}
         onLogoutClick={() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("accessToken");
-          nav("/"); // ✅ FIX (nav umesto navigate)
+          clearToken();
+          setIsAuthenticated(false);
+          nav("/");
         }}
       />
 
-      {/* da sadržaj ne ide ispod fixed navbara */}
-      <div style={{ paddingTop: 64 }}>
+      {/* main gura footer na dno */}
+      <main className="app-main" style={{ paddingTop: 64 }}>
         <Routes>
           <Route path="/" element={<Home />} />
 
@@ -49,7 +55,7 @@ export default function App() {
             path="/appointments"
             element={
               <RequireAuth>
-                <AppointmentsPage />
+                <UserPanel />
               </RequireAuth>
             }
           />
@@ -63,22 +69,41 @@ export default function App() {
             }
           />
 
+          <Route
+            path="/stripe-checkout"
+            element={
+              <RequireAuth>
+                <StripeCheckoutStub />
+              </RequireAuth>
+            }
+          />
+
+          <Route
+            path="/stripe-success"
+            element={
+              <RequireAuth>
+                <StripeSuccess />
+              </RequireAuth>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+      </main>
 
-        <Footer />
-      </div>
+      <Footer />
 
       <LoginModal
         open={loginOpen}
         onClose={() => setLoginOpen(false)}
         onSuccess={({ roles }) => {
           setLoginOpen(false);
-
+          setIsAuthenticated(true);
           if (roles?.includes("ROLE_ADMIN")) nav("/admin");
           else nav("/appointments");
         }}
       />
     </div>
   );
+
 }

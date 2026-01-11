@@ -9,7 +9,7 @@ export default function Navbar({ isAuthenticated, onLoginClick, onLogoutClick })
       <div style={styles.brand}>🏋️ FitnessCenter</div>
 
       <button
-        type="button"   // ✅ BITNO: da ne bude submit
+        type="button"
         style={{
           ...styles.btn,
           ...(isAuthenticated ? styles.btnLogout : styles.btnLogin),
@@ -37,23 +37,8 @@ const styles = {
     padding: "0 24px",
     zIndex: 1000,
   },
-  brand: {
-    fontWeight: 700,
-    fontSize: 18,
-  },
-  btn: {
-    padding: "8px 14px",
-    borderRadius: 8,
-    border: "none",
-    cursor: "pointer",
-    fontWeight: 600,
-  },
-  btnLogin: {
-    background: "#fff",
-    color: "#111",
-  },
-  btnLogout: {
-    background: "#ff4d4f",
-    color: "#fff",
-  },
+  brand: { fontWeight: 700, fontSize: 18 },
+  btn: { padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 600 },
+  btnLogin: { background: "#fff", color: "#111" },
+  btnLogout: { background: "#ff4d4f", color: "#fff" },
 };

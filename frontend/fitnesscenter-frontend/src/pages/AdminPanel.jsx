@@ -126,10 +126,10 @@ function Badge({ children, variant = "default" }) {
     variant === "green"
       ? "bg-green-50 text-green-700 border-green-200"
       : variant === "blue"
-        ? "bg-blue-50 text-blue-700 border-blue-200"
-        : variant === "red"
-          ? "bg-red-50 text-red-700 border-red-200"
-          : "bg-gray-50 text-gray-700 border-gray-200";
+      ? "bg-blue-50 text-blue-700 border-blue-200"
+      : variant === "red"
+      ? "bg-red-50 text-red-700 border-red-200"
+      : "bg-gray-50 text-gray-700 border-gray-200";
   return (
     <span className={cx("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium", styles)}>
       {children}
@@ -434,6 +434,10 @@ export default function AdminPanel() {
     );
   }
 
+  // ✅ Zakucana veličina za galeriju (uvek ista)
+  const GALLERY_W = 520;
+  const GALLERY_H = 280;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="mx-auto max-w-6xl px-4 py-8">
@@ -466,48 +470,57 @@ export default function AdminPanel() {
           <Card
             title="Galerija"
             icon={ImageIcon}
-            right={<Badge variant="blue">{imgIndex + 1} / {GALLERY_IMAGES.length}</Badge>}
+            right={
+              <Badge variant="blue">
+                {imgIndex + 1} / {GALLERY_IMAGES.length}
+              </Badge>
+            }
           >
-            <div className="flex items-center justify-center gap-3">
-              {/* Leva strelica */}
-              <IconButton type="button" onClick={prevImg} aria-label="Prethodna slika">
-                <ChevronLeft className="h-4 w-4" />
-              </IconButton>
-
-              {/* Slika (manja) */}
-              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
+            <div className="flex flex-col items-center justify-center gap-3">
+              {/* ✅ Slika (uvek ista veličina) */}
+              <div
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50"
+                style={{ width: GALLERY_W, height: GALLERY_H }}
+              >
                 <img
                   src={GALLERY_IMAGES[imgIndex]}
                   alt={`gallery-${imgIndex}`}
-                  className="h-[180px] w-[320px] object-cover sm:h-[220px] sm:w-[420px]"
+                  className="h-full w-full object-cover"
                   loading="lazy"
                 />
               </div>
 
-              {/* Desna strelica */}
-              <IconButton type="button" onClick={nextImg} aria-label="Sledeća slika">
-                <ChevronRight className="h-4 w-4" />
-              </IconButton>
-            </div>
+              {/* Strelice jedna pored druge */}
+              <div className="flex items-center justify-center gap-2">
+                <IconButton type="button" onClick={prevImg} aria-label="Prethodna slika">
+                  <ChevronLeft className="h-4 w-4" />
+                  
+                </IconButton>
 
-            {/* tačkice */}
-            <div className="mt-4 flex justify-center gap-2">
-              {GALLERY_IMAGES.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setImgIndex(i)}
-                  className={cx(
-                    "h-2.5 w-2.5 rounded-full border",
-                    i === imgIndex ? "bg-gray-900 border-gray-900" : "bg-white border-gray-300"
-                  )}
-                  aria-label={`Go to ${i + 1}`}
-                />
-              ))}
+                <IconButton type="button" onClick={nextImg} aria-label="Sledeća slika">
+                  
+                  <ChevronRight className="h-4 w-4" />
+                </IconButton>
+              </div>
+
+              {/* tačkice */}
+              <div className="mt-2 flex justify-center gap-2">
+                {GALLERY_IMAGES.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setImgIndex(i)}
+                    className={cx(
+                      "h-2.5 w-2.5 rounded-full border",
+                      i === imgIndex ? "bg-gray-900 border-gray-900" : "bg-white border-gray-300"
+                    )}
+                    aria-label={`Go to ${i + 1}`}
+                  />
+                ))}
+              </div>
             </div>
           </Card>
         )}
-
 
         {/* ================= LOKACIJA ================= */}
         {tab === "locations" && (
@@ -678,7 +691,6 @@ export default function AdminPanel() {
             icon={Users}
             right={
               <div className="flex flex-wrap items-center gap-2">
-                {/* Filter po roli */}
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-gray-600">Filter rola:</span>
                   <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="h-9">
@@ -689,7 +701,6 @@ export default function AdminPanel() {
                   </Select>
                 </div>
 
-                {/* Sort po roli (grupisanje) */}
                 <IconButton
                   type="button"
                   onClick={() => setRoleSort((s) => (s === "NONE" ? "ASC" : s === "ASC" ? "DESC" : "NONE"))}
@@ -745,7 +756,6 @@ export default function AdminPanel() {
 
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex items-center gap-2">
-                          {/* Izmena: smisleno (SELLER može, ostale po potrebi možeš proširiti) */}
                           <button
                             type="button"
                             onClick={() => openEditSeller(m)}
@@ -860,10 +870,18 @@ export default function AdminPanel() {
         <form onSubmit={createSeller} className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Ime">
-              <Input value={sellerForm.memberName} onChange={(e) => setSellerForm({ ...sellerForm, memberName: e.target.value })} required />
+              <Input
+                value={sellerForm.memberName}
+                onChange={(e) => setSellerForm({ ...sellerForm, memberName: e.target.value })}
+                required
+              />
             </Field>
             <Field label="Prezime">
-              <Input value={sellerForm.memberSurname} onChange={(e) => setSellerForm({ ...sellerForm, memberSurname: e.target.value })} required />
+              <Input
+                value={sellerForm.memberSurname}
+                onChange={(e) => setSellerForm({ ...sellerForm, memberSurname: e.target.value })}
+                required
+              />
             </Field>
           </div>
 
@@ -876,11 +894,20 @@ export default function AdminPanel() {
           </Field>
 
           <Field label="Username">
-            <Input value={sellerForm.username} onChange={(e) => setSellerForm({ ...sellerForm, username: e.target.value })} required />
+            <Input
+              value={sellerForm.username}
+              onChange={(e) => setSellerForm({ ...sellerForm, username: e.target.value })}
+              required
+            />
           </Field>
 
           <Field label="Password">
-            <Input type="password" value={sellerForm.password} onChange={(e) => setSellerForm({ ...sellerForm, password: e.target.value })} required />
+            <Input
+              type="password"
+              value={sellerForm.password}
+              onChange={(e) => setSellerForm({ ...sellerForm, password: e.target.value })}
+              required
+            />
           </Field>
 
           <Field label="Lokacija">
@@ -918,10 +945,18 @@ export default function AdminPanel() {
         <form onSubmit={updateSeller} className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Ime">
-              <Input value={editSellerForm.memberName} onChange={(e) => setEditSellerForm((s) => ({ ...s, memberName: e.target.value }))} required />
+              <Input
+                value={editSellerForm.memberName}
+                onChange={(e) => setEditSellerForm((s) => ({ ...s, memberName: e.target.value }))}
+                required
+              />
             </Field>
             <Field label="Prezime">
-              <Input value={editSellerForm.memberSurname} onChange={(e) => setEditSellerForm((s) => ({ ...s, memberSurname: e.target.value }))} required />
+              <Input
+                value={editSellerForm.memberSurname}
+                onChange={(e) => setEditSellerForm((s) => ({ ...s, memberSurname: e.target.value }))}
+                required
+              />
             </Field>
           </div>
 
@@ -934,7 +969,11 @@ export default function AdminPanel() {
           </Field>
 
           <Field label="Username">
-            <Input value={editSellerForm.username} onChange={(e) => setEditSellerForm((s) => ({ ...s, username: e.target.value }))} required />
+            <Input
+              value={editSellerForm.username}
+              onChange={(e) => setEditSellerForm((s) => ({ ...s, username: e.target.value }))}
+              required
+            />
           </Field>
 
           <Field label="Lokacija">

@@ -59,6 +59,14 @@ button {
 }
 
 
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
 .content {
   flex: 1;
   display: flex;
@@ -227,4 +235,26 @@ button {
 }
 .footer a:hover {
   text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+
+.app-img-box {
+  width: 100%;
+  height: 180px;          
+  overflow: hidden;
+  border-radius: 16px;
+  background: #eee;
+}
+
+.app-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;      
+  object-position: center;
 }

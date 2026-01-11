@@ -1,4 +1,5 @@
-const KEY = "token"; 
+const KEY = "jwtToken"; 
+
 
 export const tokenStore = {
   get: () => localStorage.getItem(KEY),

@@ -8,7 +8,10 @@ export default function LoginModal({ open, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open) setErr("");
+    if (open) {
+      setErr("");
+ 
+    }
   }, [open]);
 
   if (!open) return null;
@@ -33,12 +36,17 @@ export default function LoginModal({ open, onClose, onSuccess }) {
         return;
       }
 
+      
       setToken(token);
 
+      
       const roles = getRolesFromToken(token);
       const userEmail = getEmailFromToken(token);
 
+     
       onSuccess?.({ token, roles, email: userEmail });
+
+     
       onClose?.();
     } catch (e2) {
       setErr(e2?.message || "Network error");
@@ -111,8 +119,27 @@ const styles = {
   },
   form: { display: "flex", flexDirection: "column", gap: 12 },
   label: { display: "flex", flexDirection: "column", gap: 6, fontSize: 14 },
-  input: { padding: "10px 12px", borderRadius: 10, border: "1px solid #ddd", outline: "none", width: "100%" },
+  input: {
+    padding: "10px 12px",
+    borderRadius: 10,
+    border: "1px solid #ddd",
+    outline: "none",
+    width: "100%",
+  },
   actions: { display: "flex", gap: 10, marginTop: 8, justifyContent: "flex-end" },
-  primaryBtn: { padding: "10px 14px", borderRadius: 10, border: "none", cursor: "pointer", background: "#111", color: "#fff" },
-  secondaryBtn: { padding: "10px 14px", borderRadius: 10, border: "1px solid #ddd", cursor: "pointer", background: "#fff" },
+  primaryBtn: {
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "none",
+    cursor: "pointer",
+    background: "#111",
+    color: "#fff",
+  },
+  secondaryBtn: {
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "1px solid #ddd",
+    cursor: "pointer",
+    background: "#fff",
+  },
 };
